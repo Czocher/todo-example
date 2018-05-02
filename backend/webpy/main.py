@@ -23,10 +23,17 @@ urls = (
 
 class TodoResource:
 
+    @staticmethod
+    def _get_todo_or_400(id):
+        try:
+            return DATA[int(id)]
+        except IndexError:
+            raise web.badrequest()
+
     def GET(self, id=None):
-        # TODO handle index not in list
         if id is not None:
-            return json.dumps(DATA[int(id)].__dict__)
+            todo = self._get_todo_or_400(id)
+            return json.dumps(todo.__dict__)
         return json.dumps([d.__dict__ for d in DATA])
 
     def POST(self, id=None):
@@ -37,10 +44,9 @@ class TodoResource:
         raise web.ok()
 
     def PUT(self, id=None):
-        # TODO handle index not in list
         if id is None:
             raise web.badrequest()
-        todo = DATA[int(id)]
+        todo = self._get_todo_or_400(id)
         edits = json.loads(web.data())
         todo.order = edits.get('order', todo.order)
         todo.title = edits.get('title', todo.title)
@@ -50,7 +56,10 @@ class TodoResource:
     def DELETE(self, id=None):
         if id is None:
             DATA = []
-        del DATA[int(id)]
+        try:
+            del DATA[int(id)]
+        except IndexError:
+            raise web.badrequest()
         raise web.ok()
 
 if __name__ == "__main__":
